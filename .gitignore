@@ -1,0 +1,12 @@
+# Global ignores for all projects
+.DS_Store
+*.log
+logs/
+node_modules/
+dist/
+build/
+.env
+.env.*
+.idea/
+.vscode/
+*.tsbuildinfo
