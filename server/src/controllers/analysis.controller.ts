@@ -29,26 +29,27 @@ export class AnalysisController {
         });
         }
 
-      // Step 1: Get search results
-      const searchResults = await GoogleService.searchCompetitors(sanitizedUrl);
-      console.log('Google Search : ',searchResults)
-      // Step 2: Analyze with LLM
-      const competitors = await LLMService.analyzeCompetitors(
-        sanitizedUrl,
-        searchResults
-      );
+         console.log('URL : ',sanitizedUrl);   
+        // Step 1: Get search results
+        const searchResults = await GoogleService.searchCompetitors(sanitizedUrl);
+        console.log('Google Search : ',searchResults)
+        // Step 2: Analyze with LLM
+        const competitors = await LLMService.analyzeCompetitors(
+            sanitizedUrl,
+            searchResults
+        );
 
-      // Step 3: Add random traffic data
-      const resultsWithTraffic = competitors.map(competitor => ({
-        ...competitor,
-        organicTraffic: this.generateRandomTraffic(),
-        similarityScore: Math.random().toFixed(2)
-      }));
+        // Step 3: Add random traffic data
+        const resultsWithTraffic = competitors.map(competitor => ({
+            ...competitor,
+            organicTraffic: this.generateRandomTraffic(),
+            similarityScore: Math.random().toFixed(2)
+        }));
 
-      res.json({
-        originalUrl: sanitizedUrl,
-        competitors: resultsWithTraffic
-      });
+        res.json({
+            originalUrl: sanitizedUrl,
+            competitors: resultsWithTraffic
+        });
 
     } catch (error) {
       console.error('Analysis error:', error);

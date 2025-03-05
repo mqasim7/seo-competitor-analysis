@@ -5,7 +5,7 @@ export class GoogleService {
   static async searchCompetitors(url: string): Promise<string[]> {
     try {
       const response = await axios.post('https://google.serper.dev/search', {
-        q: `competitors of ${url}`,
+        q: `top competitors of ${url}`,
         gl: 'us',
         hl: 'en',
         num: 20
