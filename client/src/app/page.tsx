@@ -1,8 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Providers } from './providers';
 import UrlForm from './components/UrlForm';
-import CompetitorTable from './components/CompetitorTable';
 import { Competitor } from './lib/api';
 
 export default function Home() {

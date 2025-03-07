@@ -1,12 +1,9 @@
 // app/results/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { analyzeWebsite, Competitor, AnalysisResponse } from '../lib/api';
+import { analyzeWebsite } from '../lib/api';
 import CompetitorTable from '../components/CompetitorTable';
-import { Providers } from '../providers';
-import { useMutationState, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 export default function CompetitorsPage() {
 

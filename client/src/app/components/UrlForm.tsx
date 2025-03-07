@@ -14,16 +14,6 @@ interface UrlFormProps {
 export default function UrlForm() {
   const [url, setUrl] = useState('');
   const router = useRouter();
-//   const { mutate, isPending, error } = useMutation({
-//     mutationFn: async () => {
-//       const response = await analyzeWebsite(url);
-//       return response.competitors;
-//     },
-//     onSuccess: (competitors) => {
-//       onAnalysisComplete(competitors);
-//       setUrl('');
-//     },
-//   });
     const queryClient = useQueryClient();
     const { mutate, isPending } = useMutation({
         mutationKey: ['competitor-analysis'],
@@ -60,11 +50,6 @@ export default function UrlForm() {
         </div>
       </form>
 
-      {/* {error && (
-        <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-lg">
-          Error: {(error as Error).message}
-        </div>
-      )} */}
     </div>
   );
 }

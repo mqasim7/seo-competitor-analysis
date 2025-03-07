@@ -1,12 +1,6 @@
 'use client';
 
 import { Competitor } from '../lib/api';
-import {
-  createColumnHelper,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
 
 interface CompetitorTableProps {
   data: Competitor[];
