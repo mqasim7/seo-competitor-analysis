@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { config } from '../config/env';
+import { SerperResponse } from './google.service';
 
 interface Competitor {
   url: string;
@@ -53,7 +54,7 @@ export class LLMService {
 
   static async analyzeCompetitors(
     targetUrl: string,
-    searchResults: string[]
+    searchResults: SerperResponse
   ): Promise<Competitor[]> {
     const maxRetries = 3;
     let attempt = 0;
@@ -61,18 +62,32 @@ export class LLMService {
     while (attempt < maxRetries) {
       try {
         const prompt = `
-          Analyze these search results and extract 10 direct product competitors of ${targetUrl}.
+          Analyze this website content to identify direct competitors:
+
+          Company: ${searchResults.metadata.title || targetUrl}
+          Description: ${searchResults.metadata.description || 'No description available'}
+          
+          Website Content Excerpt:
+          ${searchResults.text.substring(0, 3000)} [truncated].
+
+          DEFINITION OF COMPETITOR:
+          A direct competitor offers similar products/services, targets similar customers, 
+          and competes for market share in the same industry.
+
           Return a JSON object with a "competitors" array containing objects with:
           - "url": Valid website URL (string)
           - "name": Company name (string)
           - "description": Short business description (40-60 characters)
 
           STRICT RULES:
-          1. Response must be valid JSON
-          2. Use double quotes only
-          3. No markdown formatting
-          4. No trailing commas
-          5. Include exactly 10 items
+          1. URLs must be active websites
+          2. No placeholder/example data
+          3. Focus on actual competitors
+          4. Response must be valid JSON
+          5. Use double quotes only
+          6. No markdown formatting
+          7. No trailing commas
+          8. Include exactly 10 items
 
           Example response:
           {"competitors":[{...}]}
@@ -81,15 +96,14 @@ export class LLMService {
         const response = await axios.post(
           'https://openrouter.ai/api/v1/chat/completions',
           {
-            model: 'perplexity/r1-1776',
+            model: 'openai/gpt-4o:online',
             messages: [{
               role: 'user',
-              content: `${prompt}\n\nSearch results:\n${searchResults.slice(0, 15).join('\n')}`
+              content: `${prompt}`
             }],
             response_format: { type: 'json_object' },
             temperature: 0.1, // Lower temperature for more consistent results
-            max_tokens: 2000,  // Increased token limit
-            top_p: 0.9
+            max_tokens: 4000,  // Increased token limit
           },
           {
             headers: {
@@ -117,7 +131,6 @@ export class LLMService {
           console.error('LLM Analysis Failed:', {
             error: error.response?.data || error.message,
             stack: error.stack,
-            searchResultsCount: searchResults.length,
             targetUrl
           });
           throw new Error(`Competitor analysis failed: ${error.message}`);
