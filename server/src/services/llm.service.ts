@@ -12,85 +12,34 @@ interface LLMResponse {
 }
 
 export class LLMService {
-  private static cleanJsonResponse(rawData: string): string {
+  
+  private static cleanResponse(rawData: string): string {
     return rawData
       .replace(/```json/g, '')
       .replace(/```/g, '')
-      .replace(/[\x00-\x1F\x7F-\x9F]/g, '') // Remove control characters
       .trim();
-  }
-
-  private static safeJsonParse<T>(data: string): T {
-    try {
-      return JSON.parse(data);
-    } catch (error:any) {
-      // Attempt to find JSON structure in malformed response
-      const jsonMatch = data.match(/(\{.*\}|\[.*\])/s);
-      if (jsonMatch) {
-        try {
-          return JSON.parse(jsonMatch[0]);
-        } catch (innerError:any) {
-          throw new Error(`JSON parse failed: ${innerError.message}`);
-        }
-      }
-      throw new Error('No valid JSON found in response : ' + error);
-    }
   }
 
   private static parseCompetitorsResponse(data: string): Competitor[] {
     try {
-      const cleanedData = this.cleanJsonResponse(data);
+      const cleaned = this.cleanResponse(data);
+      const parsed = JSON.parse(cleaned);
       
-      // First attempt to parse
-      let parsed: LLMResponse | Competitor[];
-      try {
-        parsed = this.safeJsonParse<LLMResponse | Competitor[]>(cleanedData);
-      } catch (parseError) {
-        // Attempt to fix common issues
-        const fixedData = cleanedData
-          .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":')
-          .replace(/'/g, '"')
-          .replace(/(\w)\s*:\s*(?=\w)/g, '$1: ')
-          .replace(/,(\s*[}\]])/g, '$1');
-
-        parsed = this.safeJsonParse<LLMResponse | Competitor[]>(fixedData);
-      }
-
-      // Handle different response formats
+      // Handle both array and object responses
       const competitors = Array.isArray(parsed) 
         ? parsed 
         : parsed.competitors || [];
 
-      // Validate and transform results
-      return competitors.slice(0, 10).map(competitor => {
-        if (!competitor?.url) {
-          throw new Error('Invalid competitor format - missing URL');
-        }
+      return competitors.map((comp:any) => ({
+        url: this.validateUrl(comp.url),
+        name: comp.name || new URL(comp.url).hostname.replace(/^www\./, ''),
+        description: comp.description || `Competitor in the same market as ${comp.name}`
+      }));
 
-        return {
-          url: this.validateUrl(competitor.url),
-          name: competitor.name || this.generateNameFromUrl(competitor.url),
-          description: competitor.description || this.generateDescription(competitor.name)
-        };
-      });
-
-    } catch (error: any) {
-      console.error('JSON Parsing Error:', {
-        rawData: data,
-        cleanedData: this.cleanJsonResponse(data),
-        error: error.message
-      });
-      throw new Error(`Failed to parse LLM response: ${error.message}`);
+    } catch (error) {
+      console.error('Failed to parse response:', error);
+      throw new Error('Invalid response format from LLM');
     }
-  }
-
-  private static generateDescription(name: string): string {
-    const defaultDescriptions = [
-      `Leading competitor in the same market as ${name}`,
-      `Direct market rival offering similar products`,
-      `Main competitor in the ${name} industry`
-    ];
-    return defaultDescriptions[Math.floor(Math.random() * defaultDescriptions.length)];
   }
 
   private static validateUrl(url: string): string {
@@ -98,16 +47,7 @@ export class LLMService {
       new URL(url);
       return url;
     } catch {
-      throw new Error(`Invalid URL format: ${url}`);
-    }
-  }
-
-  private static generateNameFromUrl(url: string): string {
-    try {
-      const hostname = new URL(url).hostname;
-      return hostname.replace(/^www\./, '').split('.')[0];
-    } catch {
-      return 'Unknown Competitor';
+      throw new Error(`Invalid URL: ${url}`);
     }
   }
 
@@ -166,7 +106,7 @@ export class LLMService {
 
         const content = response.data.choices[0].message.content;
         if (!content) throw new Error('Empty response from LLM');
-
+        console.log('Content : ', content);
         return this.parseCompetitorsResponse(content);
 
       } catch (error: any) {
